@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Arnold's Road Back</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Permanent+Marker&display=swap">
+<style>
+/* Layout: one whiteboard in an aluminium frame, same zones as Arnold's real board; on a phone "Today" comes first */
+:root{
+  --wall:#e6e9ed; --board:#fbfcfd; --frame:#c2c8cf; --ink:#1f252b; --muted:#6a7380;
+  --blue:#2b5ec2; --green:#3b9849; --track:#e4e8ed; --red:#c64232;
+  --f-marker:"Permanent Marker","Comic Sans MS",cursive;
+  --f-hand:"Patrick Hand","Segoe Print","Comic Sans MS",cursive;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --wall:#101316; --board:#1b2025; --frame:#3a424b; --ink:#e9edf0; --muted:#98a2ad;
+  --blue:#7ea4ff; --green:#62c271; --track:#2a3138; --red:#ff7f6e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --wall:#101316; --board:#1b2025; --frame:#3a424b; --ink:#e9edf0; --muted:#98a2ad;
+  --blue:#7ea4ff; --green:#62c271; --track:#2a3138; --red:#ff7f6e; color-scheme:dark}
+
+body{background:var(--wall);color:var(--ink);font-family:var(--f-hand);font-size:19px;line-height:1.3;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:4px}
+
+.board{max-width:1040px;margin:0 auto;background:var(--board);border:10px solid var(--frame);border-radius:6px;
+  padding:22px clamp(14px,3vw,30px) 28px;box-shadow:0 10px 30px rgb(0 0 0 / .12)}
+
+header{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:flex-end;justify-content:space-between;
+  border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:22px}
+h1{font-family:var(--f-marker);font-weight:400;font-size:clamp(34px,7vw,56px);line-height:1;margin:0;letter-spacing:.04em;text-wrap:balance}
+.motto{margin:6px 0 0;color:var(--muted)}
+.dates{text-align:right;font-size:17px}
+.dates b{display:block;font-family:var(--f-marker);font-weight:400;font-size:22px;color:var(--blue)}
+
+.grid{display:grid;gap:22px;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+  grid-template-areas:"year week" "year today" "bonus today" "bonus ."}
+.year{grid-area:year}.week{grid-area:week}.today{grid-area:today}.bonus{grid-area:bonus}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"today" "week" "year" "bonus"}}
+
+.panel{border:2px solid var(--blue);border-radius:18px;padding:14px 16px 18px}
+h2{font-family:var(--f-marker);font-weight:400;color:var(--blue);font-size:26px;margin:0 0 12px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+h2 small{font-family:var(--f-hand);font-size:17px;color:var(--muted)}
+
+/* Year metrics */
+.metric{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;margin-bottom:14px}
+.metric .name{font-family:var(--f-marker);font-size:21px}
+.metric .val{font-size:21px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.metric .val span{color:var(--muted)}
+.bar{grid-column:1/-1;height:14px;border:2px solid var(--ink);border-radius:4px;background:var(--track);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--blue);transition:width .4s ease}
+.ctrls{display:flex;gap:6px;align-items:center;grid-column:1/-1;flex-wrap:wrap;font-size:16px;color:var(--muted)}
+.pill{border:2px solid var(--ink);border-radius:999px;padding:1px 11px;font-size:17px;color:var(--ink);background:var(--board)}
+.pill:hover{background:var(--track)}
+.subs{width:7ch;font:inherit;font-size:20px;color:var(--ink);background:var(--board);border:2px solid var(--ink);border-radius:6px;padding:0 6px;text-align:right}
+
+.rehab{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:6px}
+.step{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:16px;color:var(--blue);text-align:center}
+.step .sq{width:34px;height:34px;border:2.5px solid var(--ink);border-radius:4px;display:grid;place-items:center}
+.step.on .sq{background:var(--green);border-color:var(--green)}
+.step.on .sq::after{content:"";width:12px;height:20px;border:solid var(--board);border-width:0 4px 4px 0;transform:rotate(45deg) translate(-2px,-2px)}
+
+/* Week */
+.wrow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap}
+.wrow .lbl{min-width:0}
+.wrow.done .lbl{color:var(--green)}
+.pips{display:flex;gap:5px;flex-wrap:wrap}
+.pip{width:18px;height:18px;border:2px solid var(--ink);border-radius:3px}
+.pip.on{background:var(--blue);border-color:var(--blue)}
+.wrow.done .pip.on{background:var(--green);border-color:var(--green)}
+
+/* Today */
+.daynav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:18px}
+.daynav button{font-size:24px;line-height:1;padding:2px 10px;border-radius:6px}
+.daynav button:disabled{opacity:.25;cursor:default}
+.task{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:6px 0;font-family:var(--f-marker);font-size:23px}
+.task .box{flex:none;width:28px;height:28px;border:3px solid var(--ink);border-radius:4px;position:relative}
+.task .box svg{position:absolute;inset:-8px -6px -2px -2px;width:38px;height:38px;stroke:var(--blue);stroke-width:5;fill:none;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:60;stroke-dashoffset:60;transition:stroke-dashoffset .25s ease}
+.task[aria-pressed="true"] .box svg{stroke-dashoffset:0}
+.task[aria-pressed="true"] .txt{color:var(--muted)}
+.task .note{font-family:var(--f-hand);font-size:16px;color:var(--muted);margin-left:auto}
+.rule{border-top:2px solid var(--blue);margin-top:12px;padding-top:8px;color:var(--blue);font-size:17px;text-align:center}
+.streak{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:18px}
+.streak b{font-family:var(--f-marker);font-weight:400;font-size:24px;color:var(--red)}
+
+/* Bonus + Puppy */
+.bonus h2{color:var(--ink);text-decoration:underline;text-underline-offset:5px}
+.blist{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.blist li{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.blist .bn{flex:1 1 9ch;min-width:0}
+.blist .bv{font-variant-numeric:tabular-nums;white-space:nowrap}
+.blist li.done .bn{color:var(--green);text-decoration:line-through;text-decoration-thickness:2px}
+.mini{width:26px;height:26px;border:2px solid var(--ink);border-radius:50%;font-size:18px;line-height:1;display:grid;place-items:center}
+.mini:hover{background:var(--track)}
+.flag{width:24px;height:24px;border:2.5px solid var(--ink);border-radius:4px}
+.flag[aria-pressed="true"]{background:var(--green);border-color:var(--green)}
+
+.pup{display:flex;align-items:flex-end;gap:6px;margin-top:20px;flex-wrap:wrap}
+.pup svg{width:min(250px,72%);height:auto;stroke:var(--ink);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;fill:none;overflow:visible}
+.pup .solid{fill:var(--ink)}
+.pup .name{font-family:var(--f-marker);font-size:20px;fill:var(--ink);stroke:none}
+.bubble{position:relative;border:2px solid var(--ink);border-radius:16px;padding:8px 12px;font-size:18px;max-width:240px;margin-bottom:70px;background:var(--board)}
+/* Pivot points: tail base and the neck, so the tail wags and the head nods like a real dog */
+.tail{transform-origin:31px 101px}
+.head{transform-origin:156px 96px}
+.motion{opacity:0;transition:opacity .2s}
+.pup.happy .tail,.pup.cheer .tail{animation:wag .16s ease-in-out infinite alternate}
+.pup.happy .head{animation:nod .9s ease-in-out infinite}
+.pup.cheer .head{animation:nod .9s ease-in-out 1}
+.pup.happy .motion,.pup.cheer .motion{opacity:1}
+@keyframes wag{from{transform:rotate(-18deg)}to{transform:rotate(18deg)}}
+@keyframes nod{0%,100%{transform:rotate(0)}25%{transform:rotate(9deg)}50%{transform:rotate(-3deg)}75%{transform:rotate(7deg)}}
+@media (prefers-reduced-motion:reduce){.pup .tail,.pup .head{animation:none!important}.bar i,.task .box svg{transition:none}}
+
+.foot{margin-top:18px;font-size:15px;color:var(--muted);text-align:center}
+</style>
+<style>body{margin:0;padding-top:max(20px,env(safe-area-inset-top,0px))}</style>
+</head>
+<body>
+
+<div class="board">
+  <header>
+    <div>
+      <h1>MY ROAD BACK</h1>
+      <p class="motto">Build coach, language, business. Build the life.</p>
+    </div>
+    <div class="dates"><b id="countdown"></b>Nov 2026 – Oct 2027</div>
+  </header>
+
+  <div class="grid">
+    <section class="panel year" aria-labelledby="h-year">
+      <h2 id="h-year">The Year <small>metrics</small></h2>
+      <div id="metrics"></div>
+      <div class="metric" style="margin-bottom:0">
+        <span class="name">Rehab</span><span class="val"><span id="rehabTxt"></span></span>
+        <div class="rehab" id="rehab" style="grid-column:1/-1"></div>
+      </div>
+    </section>
+
+    <section class="panel week" aria-labelledby="h-week">
+      <h2 id="h-week">This week <small id="weekRange"></small></h2>
+      <div id="week"></div>
+    </section>
+
+    <section class="panel today" aria-labelledby="h-today">
+      <h2 id="h-today">Today <small>ideal day</small></h2>
+      <div class="daynav">
+        <button id="prevDay" aria-label="Previous day">‹</button>
+        <span id="dayLabel"></span>
+        <button id="nextDay" aria-label="Next day">›</button>
+      </div>
+      <div id="tasks"></div>
+      <div class="rule">5 hours max = work + development</div>
+      <div class="streak">
+        <span>Streak <b id="streak">0</b> ideal days in a row</span>
+        <span>Best <b id="best">0</b></span>
+      </div>
+    </section>
+
+    <section class="bonus" aria-labelledby="h-bonus">
+      <h2 id="h-bonus">Bonus <small>gym &amp; other</small></h2>
+      <ul class="blist" id="bonus"></ul>
+      <div class="pup" id="pup">
+        <svg viewBox="0 0 252 182" aria-label="Puppy the dachshund">
+          <g class="tail">
+            <path d="M31 101 Q27 70 25 40 M18 51 L25 38 L32 50"/>
+          </g>
+          <path d="M31 101 Q80 97 141 99"/>
+          <path d="M31 101 Q17 106 19 124 Q21 137 33 139 L33 151 Q40 154 47 151 L46 138 M47 138 Q100 133 150 135 M53 137 L54 149 Q59 152 63 149 L62 137"/>
+          <path d="M150 135 L150 149 Q156 152 163 149 L161 131 M165 147 Q170 149 172 146 L170 128"/>
+          <path d="M141 99 Q143 82 150 68 M170 98 Q168 118 161 131"/>
+          <g class="head">
+            <path d="M150 68 Q157 47 182 48 Q199 50 205 64 L226 71 Q234 76 228 84 Q212 91 196 89 Q181 92 170 98"/>
+            <path d="M161 55 Q143 70 146 92 Q150 105 161 101 Q167 85 169 61" stroke-width="4"/>
+            <circle class="solid" cx="196" cy="64" r="2.8" stroke="none"/>
+            <circle class="solid" cx="229" cy="76" r="4.4" stroke="none"/>
+            <path d="M205 84 Q213 89 221 84"/>
+            <path class="motion" d="M160 34 Q177 23 195 30 M239 61 Q243 70 239 79 M245 56 Q251 70 245 84"/>
+          </g>
+          <path d="M14 141 Q8 149 14 157"/>
+          <path d="M72 178 L72 160 M66 167 L72 158 L78 167" stroke-width="2.6"/>
+          <text class="name" x="84" y="178">Puppy</text>
+        </svg>
+        <div class="bubble" id="bubble"></div>
+      </div>
+    </section>
+  </div>
+
+  <p class="foot">Progress is saved on this phone, in this browser.</p>
+</div>
+
+<script>
+const KEY = 'roadback-arnold-v1';
+const START = new Date(2026, 10, 1);
+const END = new Date(2027, 9, 31);
+const ENGLISH_HOURS_PER_DAY = 1.5;
+
+const DAILY = [
+  { id: 'english', label: 'English (90 min)', note: '+1.5 h' },
+  { id: 'body', label: 'Body / workout' },
+  { id: 'reels', label: 'Reels', note: '+1 reel' },
+  { id: 'video', label: '1 ed. video' },
+  { id: 'stories', label: '3 stories' },
+];
+const REHAB = ['Jumps', 'Run', 'Full work', 'Complete (play bball)'];
+const BONUS_NUM = [
+  { id: 'pullups', label: 'Pull ups', target: 25, unit: 'reps', step: 1 },
+  { id: 'arms', label: 'Arms', target: 40, unit: 'cm', step: 0.5 },
+  { id: 'bp', label: 'Bench press', target: 120, unit: 'kg', step: 2.5 },
+  { id: 'hflag', label: 'Human flag', target: 5, unit: 'sec', step: 1 },
+  { id: 'dflag', label: 'Dragon flag', target: 5, unit: 'sec', step: 1 },
+];
+const BONUS_FLAG = [
+  { id: 'dunk', label: 'Dunk' },
+  { id: 'serbian', label: 'Serbian A1' },
+  { id: 'website', label: 'Website' },
+];
+
+function defaults() {
+  return {
+    days: {}, englishExtra: 0, reelsExtra: 0, longVids: [], subs: 74, rehab: 0,
+    bonus: { pullups: 11, arms: 36, bp: 0, hflag: 0, dflag: 0, dunk: false, serbian: false, website: false },
+  };
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      const base = defaults();
+      return { ...base, ...saved, bonus: { ...base.bonus, ...saved.bonus } };
+    }
+  } catch (err) { console.warn('Could not read saved progress', err); }
+  return defaults();
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch (err) { console.warn('Could not save progress', err); }
+}
+
+const state = load();
+const today = startOfDay(new Date());
+let viewDate = today;
+
+function startOfDay(date) { return new Date(date.getFullYear(), date.getMonth(), date.getDate()); }
+function addDays(date, n) { const copy = new Date(date); copy.setDate(copy.getDate() + n); return copy; }
+function dayKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+function daysBetween(from, to) { return Math.round((to - from) / 86400000); }
+function isIdeal(day) { return !!day && DAILY.every(task => day[task.id]); }
+function countDays(predicate) { return Object.values(state.days).filter(predicate).length; }
+function fmtNum(n) { return Number.isInteger(n) ? n.toLocaleString('en-US') : n.toFixed(1); }
+function pct(value, target) { return Math.min(100, (value / target) * 100); }
+
+function englishHours() { return countDays(d => d.english) * ENGLISH_HOURS_PER_DAY + state.englishExtra; }
+function reelsTotal() { return countDays(d => d.reels) + state.reelsExtra; }
+function idealTotal() { return countDays(isIdeal); }
+
+function streaks() {
+  let cursor = isIdeal(state.days[dayKey(today)]) ? today : addDays(today, -1);
+  let current = 0;
+  while (isIdeal(state.days[dayKey(cursor)])) { current++; cursor = addDays(cursor, -1); }
+  let best = 0, run = 0, prev = null;
+  Object.keys(state.days).sort().forEach(key => {
+    if (!isIdeal(state.days[key])) return;
+    const date = new Date(key + 'T00:00:00');
+    run = prev && daysBetween(prev, date) === 1 ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = date;
+  });
+  return { current, best };
+}
+
+function renderHeader() {
+  const el = document.getElementById('countdown');
+  if (today < START) {
+    const n = daysBetween(today, START);
+    el.textContent = n === 1 ? 'Starts tomorrow' : `Starts in ${n} days`;
+  } else if (today <= END) {
+    el.textContent = `Day ${daysBetween(START, today) + 1} · ${daysBetween(today, END)} left`;
+  } else {
+    el.textContent = 'Year complete';
+  }
+}
+
+function metricRow(name, value, target, ctrls) {
+  return `<div class="metric">
+    <span class="name">${name}</span>
+    <span class="val">${fmtNum(value)} <span>/ ${fmtNum(target)}</span></span>
+    <div class="bar"><i style="width:${pct(value, target)}%"></i></div>
+    ${ctrls ? `<div class="ctrls">${ctrls}</div>` : ''}
+  </div>`;
+}
+
+function renderYear() {
+  document.getElementById('metrics').innerHTML =
+    metricRow('English', englishHours(), 1300,
+      `<button class="pill" data-act="eng-" aria-label="Remove 30 minutes">−</button>
+       <button class="pill" data-act="eng+">+30 min</button> hours; each English tick adds 1.5`) +
+    metricRow('Ideal days', idealTotal(), 180, 'counts itself when all 5 boxes of a day are ticked') +
+    metricRow('Long videos', state.longVids.length, 52,
+      `<button class="pill" data-act="lv-" aria-label="Remove a long video">−</button>
+       <button class="pill" data-act="lv+">+ video posted</button>`) +
+    metricRow('Subscribers (YT)', state.subs, 10000,
+      `<label for="subs">now:</label><input class="subs" id="subs" type="number" min="0" inputmode="numeric" value="${state.subs}">`) +
+    metricRow('Shorts / Reels', reelsTotal(), 300,
+      `<button class="pill" data-act="reel-" aria-label="Remove a reel">−</button>
+       <button class="pill" data-act="reel+">+1</button> each Reels tick adds 1`);
+
+  document.getElementById('rehabTxt').textContent = `phase ${state.rehab} / 4`;
+  document.getElementById('rehab').innerHTML = REHAB.map((label, i) =>
+    `<button class="step ${i < state.rehab ? 'on' : ''}" data-act="rehab" data-i="${i}" aria-pressed="${i < state.rehab}">
+      <span class="sq"></span>${label}</button>`).join('');
+}
+
+function renderWeek() {
+  const offset = (today.getDay() + 6) % 7;
+  const monday = addDays(today, -offset);
+  const keys = Array.from({ length: 7 }, (_, i) => dayKey(addDays(monday, i)));
+  const inWeek = id => keys.filter(k => state.days[k] && state.days[k][id]).length;
+  const rows = [
+    { label: 'workouts', done: inWeek('body'), target: 4 },
+    { label: 'ideal days', done: keys.filter(k => isIdeal(state.days[k])).length, target: 6 },
+    { label: 'reels', done: inWeek('reels'), target: 7 },
+    { label: 'long video', done: state.longVids.filter(k => keys.includes(k)).length, target: 2, goal: 1, shown: '1–2' },
+  ];
+  const opts = { month: 'short', day: 'numeric' };
+  document.getElementById('weekRange').textContent =
+    `${monday.toLocaleDateString('en-GB', opts)} – ${addDays(monday, 6).toLocaleDateString('en-GB', opts)}`;
+  document.getElementById('week').innerHTML = rows.map(row => {
+    const pips = Array.from({ length: row.target }, (_, i) => `<span class="pip ${i < row.done ? 'on' : ''}"></span>`).join('');
+    const extra = row.done > row.target ? ` +${row.done - row.target}` : '';
+    const done = row.done >= (row.goal || row.target);
+    return `<div class="wrow ${done ? 'done' : ''}"><span class="lbl">${row.shown || row.target} ${row.label}${extra}</span><span class="pips">${pips}</span></div>`;
+  }).join('');
+}
+
+function renderToday() {
+  const key = dayKey(viewDate);
+  const day = state.days[key] || {};
+  const diff = daysBetween(viewDate, today);
+  const dateText = viewDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  document.getElementById('dayLabel').textContent =
+    diff === 0 ? `Today, ${dateText}` : diff === 1 ? `Yesterday, ${dateText}` : dateText;
+  document.getElementById('nextDay').disabled = diff === 0;
+  document.getElementById('tasks').innerHTML = DAILY.map(task =>
+    `<button class="task" data-act="task" data-id="${task.id}" aria-pressed="${!!day[task.id]}">
+      <span class="box"><svg viewBox="0 0 38 38"><path d="M7 20 L15 29 L33 5"/></svg></span>
+      <span class="txt">${task.label}</span>${task.note ? `<span class="note">${task.note}</span>` : ''}
+    </button>`).join('');
+
+  const { current, best } = streaks();
+  document.getElementById('streak').textContent = current;
+  document.getElementById('best').textContent = best;
+}
+
+function renderBonus() {
+  const nums = BONUS_NUM.map(item => {
+    const value = state.bonus[item.id];
+    return `<li class="${value >= item.target ? 'done' : ''}">
+      <span class="bn">${item.label}</span>
+      <button class="mini" data-act="bonus" data-id="${item.id}" data-d="-1" aria-label="Less ${item.label}">−</button>
+      <span class="bv">${fmtNum(value)} / ${item.target} ${item.unit}</span>
+      <button class="mini" data-act="bonus" data-id="${item.id}" data-d="1" aria-label="More ${item.label}">+</button>
+    </li>`;
+  });
+  const flags = BONUS_FLAG.map(item => {
+    const on = state.bonus[item.id];
+    return `<li class="${on ? 'done' : ''}"><span class="bn">${item.label}</span>
+      <button class="flag" data-act="flag" data-id="${item.id}" aria-pressed="${on}" aria-label="${item.label} done"></button></li>`;
+  });
+  document.getElementById('bonus').innerHTML = nums.concat(flags).join('');
+}
+
+function renderPuppy() {
+  const day = state.days[dayKey(viewDate)] || {};
+  const done = DAILY.filter(task => day[task.id]).length;
+  const isToday = daysBetween(viewDate, today) === 0;
+  let line;
+  if (done === DAILY.length) line = 'Ideal day! Good job, Arnold. Woof.';
+  else if (isToday && today < START && done === 0) line = 'We start tomorrow, Arnold. I believe in you.';
+  else if (done === 0) line = isToday ? 'Morning, Arnold. English first?' : 'Forgot to tick this day? Do it now.';
+  else line = `${done} of ${DAILY.length} done. Keep going, Arnold.`;
+  document.getElementById('bubble').textContent = line;
+  document.getElementById('pup').classList.toggle('happy', done === DAILY.length);
+}
+
+// A short wag and nod for every ticked task; the full ideal day keeps him going non-stop
+let cheerTimer;
+function cheerPuppy() {
+  const pup = document.getElementById('pup');
+  clearTimeout(cheerTimer);
+  pup.classList.remove('cheer');
+  void pup.offsetWidth; // restart the animation if he is already cheering
+  pup.classList.add('cheer');
+  cheerTimer = setTimeout(() => pup.classList.remove('cheer'), 1200);
+}
+
+function render() {
+  renderHeader(); renderYear(); renderWeek(); renderToday(); renderBonus(); renderPuppy();
+}
+
+const actions = {
+  'eng+': () => { state.englishExtra += 0.5; },
+  'eng-': () => { if (englishHours() >= 0.5) state.englishExtra -= 0.5; },
+  'reel+': () => { state.reelsExtra += 1; },
+  'reel-': () => { if (reelsTotal() >= 1) state.reelsExtra -= 1; },
+  'lv+': () => { state.longVids.push(dayKey(today)); },
+  'lv-': () => { state.longVids.pop(); },
+  rehab: el => { const i = Number(el.dataset.i); state.rehab = state.rehab === i + 1 ? i : i + 1; },
+  task: el => {
+    const key = dayKey(viewDate);
+    const day = state.days[key] || (state.days[key] = {});
+    day[el.dataset.id] = !day[el.dataset.id];
+    if (day[el.dataset.id]) cheerPuppy();
+  },
+  bonus: el => {
+    const item = BONUS_NUM.find(b => b.id === el.dataset.id);
+    const next = state.bonus[item.id] + item.step * Number(el.dataset.d);
+    state.bonus[item.id] = Math.max(0, Math.round(next * 10) / 10);
+  },
+  flag: el => { state.bonus[el.dataset.id] = !state.bonus[el.dataset.id]; },
+};
+
+document.addEventListener('click', event => {
+  const el = event.target.closest('[data-act]');
+  if (!el) return;
+  actions[el.dataset.act](el);
+  save();
+  render();
+});
+document.addEventListener('change', event => {
+  if (event.target.id !== 'subs') return;
+  const value = Math.max(0, Math.floor(Number(event.target.value)));
+  if (Number.isFinite(value)) state.subs = value;
+  save();
+  render();
+});
+document.getElementById('prevDay').addEventListener('click', () => { viewDate = addDays(viewDate, -1); render(); });
+document.getElementById('nextDay').addEventListener('click', () => {
+  if (viewDate < today) viewDate = addDays(viewDate, 1);
+  render();
+});
+
+render();
+</script>
+<script>
+// Inside Telegram: open full height; outside Telegram this object is absent
+if (window.Telegram && window.Telegram.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.expand(); }
+</script>
+</body>
+</html>

@@ -121,6 +121,9 @@ h2 small{font-family:var(--f-hand);font-size:17px;color:var(--muted)}
 
 .foot{margin-top:18px;font-size:15px;color:var(--muted);text-align:center}
 
+/* Fast double taps on ticks and +/− must not zoom the page on iPhone; pinch zoom still works */
+html{touch-action:manipulation}
+
 /* Instructions */
 [hidden]{display:none!important}
 .help{position:fixed;inset:0;z-index:20;background:rgb(0 0 0 / .45);display:flex;align-items:center;justify-content:center;

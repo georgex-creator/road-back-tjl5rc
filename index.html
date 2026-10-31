@@ -60,7 +60,7 @@ h2 small{font-family:var(--f-hand);font-size:17px;color:var(--muted)}
 .pill:hover{background:var(--track)}
 .subs{width:7ch;font:inherit;font-size:20px;color:var(--ink);background:var(--board);border:2px solid var(--ink);border-radius:6px;padding:0 6px;text-align:right}
 
-.rehab{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:6px}
+.rehab{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1.4fr);gap:8px;margin-top:6px}
 .step{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:16px;color:var(--blue);text-align:center}
 .step .sq{width:34px;height:34px;border:2.5px solid var(--ink);border-radius:4px;display:grid;place-items:center}
 .step.on .sq{background:var(--green);border-color:var(--green)}
@@ -85,7 +85,10 @@ h2 small{font-family:var(--f-hand);font-size:17px;color:var(--muted)}
   stroke-dasharray:60;stroke-dashoffset:60;transition:stroke-dashoffset .25s ease}
 .task[aria-pressed="true"] .box svg{stroke-dashoffset:0}
 .task[aria-pressed="true"] .txt{color:var(--muted)}
-.task .note{font-family:var(--f-hand);font-size:16px;color:var(--muted);margin-left:auto}
+.task .note{font-family:var(--f-hand);font-size:16px;color:var(--muted);margin-left:auto;white-space:nowrap}
+/* Bracketed hints sit on their own line under the label and never break */
+.sub{display:block;font-family:var(--f-hand);font-size:16px;line-height:1.1;white-space:nowrap}
+.step .sub{font-size:14px}
 .rule{border-top:2px solid var(--blue);margin-top:12px;padding-top:8px;color:var(--blue);font-size:17px;text-align:center}
 .streak{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:18px}
 .streak b{font-family:var(--f-marker);font-weight:400;font-size:24px;color:var(--red)}
@@ -251,13 +254,15 @@ const END = new Date(2027, 9, 31);
 const ENGLISH_HOURS_PER_DAY = 1.5;
 
 const DAILY = [
-  { id: 'english', label: 'English (90 min)', note: '+1.5 h' },
+  { id: 'english', label: 'English', sub: '(90 min)', note: '+1.5 h' },
   { id: 'body', label: 'Body / workout' },
   { id: 'reels', label: 'Reels', note: '+1 reel' },
   { id: 'video', label: '1 ed. video' },
   { id: 'stories', label: '3 stories' },
 ];
-const REHAB = ['Jumps', 'Run', 'Full work', 'Complete (play bball)'];
+const REHAB = [
+  { label: 'Jumps' }, { label: 'Run' }, { label: 'Full work' }, { label: 'Complete', sub: '(play bball)' },
+];
 const BONUS_NUM = [
   { id: 'pullups', label: 'Pull ups', target: 25, unit: 'reps', step: 1 },
   { id: 'arms', label: 'Arms', target: 40, unit: 'cm', step: 0.5 },
@@ -364,9 +369,9 @@ function renderYear() {
        <button class="pill" data-act="reel+">+1</button> each Reels tick adds 1`);
 
   document.getElementById('rehabTxt').textContent = `phase ${state.rehab} / 4`;
-  document.getElementById('rehab').innerHTML = REHAB.map((label, i) =>
+  document.getElementById('rehab').innerHTML = REHAB.map((phase, i) =>
     `<button class="step ${i < state.rehab ? 'on' : ''}" data-act="rehab" data-i="${i}" aria-pressed="${i < state.rehab}">
-      <span class="sq"></span>${label}</button>`).join('');
+      <span class="sq"></span><span>${phase.label}${phase.sub ? `<span class="sub">${phase.sub}</span>` : ''}</span></button>`).join('');
 }
 
 function renderWeek() {
@@ -402,7 +407,7 @@ function renderToday() {
   document.getElementById('tasks').innerHTML = DAILY.map(task =>
     `<button class="task" data-act="task" data-id="${task.id}" aria-pressed="${!!day[task.id]}">
       <span class="box"><svg viewBox="0 0 38 38"><path d="M7 20 L15 29 L33 5"/></svg></span>
-      <span class="txt">${task.label}</span>${task.note ? `<span class="note">${task.note}</span>` : ''}
+      <span class="txt">${task.label}${task.sub ? `<span class="sub">${task.sub}</span>` : ''}</span>${task.note ? `<span class="note">${task.note}</span>` : ''}
     </button>`).join('');
 
   const { current, best } = streaks();

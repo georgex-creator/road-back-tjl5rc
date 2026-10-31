@@ -120,6 +120,20 @@ h2 small{font-family:var(--f-hand);font-size:17px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.pup .tail,.pup .head{animation:none!important}.bar i,.task .box svg{transition:none}}
 
 .foot{margin-top:18px;font-size:15px;color:var(--muted);text-align:center}
+
+/* Instructions */
+[hidden]{display:none!important}
+.help-btn{margin-top:8px;border:2px solid var(--blue);color:var(--blue);border-radius:999px;padding:2px 14px;font-size:18px}
+.help-btn:hover{background:var(--track)}
+.help{position:fixed;inset:0;z-index:20;background:rgb(0 0 0 / .45);display:flex;align-items:center;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.help-card{background:var(--board);color:var(--ink);border:8px solid var(--frame);border-radius:6px;max-width:520px;width:100%;max-height:100%;overflow-y:auto;padding:16px 18px 20px}
+.help-card h2{margin-bottom:6px}
+.help-card h3{font-family:var(--f-marker);font-weight:400;font-size:20px;margin:14px 0 4px}
+.help-card ul{margin:0;padding-left:20px}
+.help-card li{margin-bottom:4px}
+.help-close{margin-top:16px;width:100%;border:2px solid var(--ink);border-radius:999px;padding:4px;font-family:var(--f-marker);font-size:20px}
+.help-close:hover{background:var(--track)}
 </style>
 <style>body{margin:0;padding-top:max(20px,env(safe-area-inset-top,0px))}</style>
 </head>
@@ -131,7 +145,8 @@ h2 small{font-family:var(--f-hand);font-size:17px;color:var(--muted)}
       <h1>MY ROAD BACK</h1>
       <p class="motto">Build coach, language, business. Build the life.</p>
     </div>
-    <div class="dates"><b id="countdown"></b>Nov 2026 – Oct 2027</div>
+    <div class="dates"><b id="countdown"></b>Nov 2026 – Oct 2027<br>
+      <button class="help-btn" id="helpOpen" type="button">Instructions</button></div>
   </header>
 
   <div class="grid">
@@ -194,6 +209,39 @@ h2 small{font-family:var(--f-hand);font-size:17px;color:var(--muted)}
   </div>
 
   <p class="foot">Progress is saved on this phone, in this browser.</p>
+</div>
+
+<div class="help" id="help" hidden role="dialog" aria-modal="true" aria-labelledby="h-help">
+  <div class="help-card">
+    <h2 id="h-help">How it works</h2>
+    <h3>Today</h3>
+    <ul>
+      <li>Tick each task when it's done. Tap again to untick.</li>
+      <li>All 5 ticked = an ideal day. It counts toward Ideal days and your streak.</li>
+      <li>English adds 1.5 hours to the year. Reels adds 1 reel.</li>
+      <li>Forgot yesterday? Tap ‹ next to the date and tick it there.</li>
+    </ul>
+    <h3>This week</h3>
+    <ul><li>Fills itself from your daily ticks, Monday to Sunday.</li></ul>
+    <h3>The Year</h3>
+    <ul>
+      <li>Extra English outside the 90 min: +30 min.</li>
+      <li>Posted a long video: + video posted.</li>
+      <li>Subscribers: type the current number from YouTube.</li>
+      <li>Extra reels: +1. The − buttons undo a mistake.</li>
+      <li>Rehab: tap a phase when you finish it.</li>
+    </ul>
+    <h3>Bonus</h3>
+    <ul>
+      <li>New record? Use + and − to set it.</li>
+      <li>Dunk, Serbian A1, website: tap the square when it's done.</li>
+    </ul>
+    <h3>Puppy</h3>
+    <ul><li>Wags and nods for every tick. Close the whole day and he won't stop.</li></ul>
+    <h3>Good to know</h3>
+    <ul><li>Progress is saved on this phone. On another device the board starts empty.</li></ul>
+    <button class="help-close" id="helpClose" type="button">Got it</button>
+  </div>
 </div>
 
 <script>
@@ -449,6 +497,24 @@ document.getElementById('nextDay').addEventListener('click', () => {
   if (viewDate < today) viewDate = addDays(viewDate, 1);
   render();
 });
+
+const HELP_SEEN_KEY = 'roadback-help-seen';
+const helpEl = document.getElementById('help');
+function closeHelp() {
+  helpEl.hidden = true;
+  try { localStorage.setItem(HELP_SEEN_KEY, '1'); }
+  catch (err) { console.warn('Could not remember that instructions were seen', err); }
+}
+document.getElementById('helpOpen').addEventListener('click', () => { helpEl.hidden = false; });
+document.getElementById('helpClose').addEventListener('click', closeHelp);
+helpEl.addEventListener('click', event => { if (event.target === helpEl) closeHelp(); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !helpEl.hidden) closeHelp(); });
+
+// First visit: show the instructions once
+let helpSeen = false;
+try { helpSeen = localStorage.getItem(HELP_SEEN_KEY) === '1'; }
+catch (err) { console.warn('Could not read instructions flag', err); }
+if (!helpSeen) helpEl.hidden = false;
 
 render();
 </script>
